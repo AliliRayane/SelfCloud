@@ -1,0 +1,22 @@
+services:
+  selfcloud:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${PORT:-3000}:3000"
+    environment:
+      SETUP_TOKEN: ${SETUP_TOKEN:?Set SETUP_TOKEN in .env before starting}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    volumes:
+      - selfcloud-data:/data
+      - ${BACKUP_DIR:-./backups}:/backups
+    stop_grace_period: 90s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  selfcloud-data:

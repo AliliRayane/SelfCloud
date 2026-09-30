@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
@@ -158,6 +158,18 @@ test('SelfCloud end-to-end ownership, photo and recovery workflows', async t => 
       assert.equal((await request('/me', { user: 'bob' })).status, 401);
       assert.equal((await request('/login', { method: 'POST', body: { username: 'bob', password: 'correct horse battery staple' } })).status, 401);
       assert.equal((await request(`/admin/users/${admin.id}`, { user: 'admin', method: 'PATCH', body: { disabled: true } })).status, 400);
+      assert.equal((await request(`/admin/users/${alice.id}`, { user: 'admin', method: 'PATCH', body: { disabled: 'false' } })).status, 400);
+    });
+    await t.test('password changes and administrator resets invalidate existing sessions', async () => {
+      assert.equal((await request('/password', { user: 'alice', method: 'POST', body: { currentPassword: 'wrong password', password: 'a different secure password' } })).status, 403);
+      assert.equal((await request('/password', { user: 'alice', method: 'POST', body: { currentPassword: 'correct horse battery staple', password: 'a different secure password' } })).status, 200);
+      assert.equal((await request('/me', { user: 'alice' })).status, 401);
+      const result = await request('/login', { method: 'POST', body: { username: 'alice', password: 'a different secure password' } });
+      assert.equal(result.status, 200);
+      cookies.alice = result.response.headers.get('set-cookie').split(';')[0];
+      assert.equal((await request('/me', { user: 'alice' })).status, 200);
+      assert.equal((await request(`/admin/users/${alice.id}`, { user: 'admin', method: 'PATCH', body: { password: 'correct horse battery staple' } })).status, 200);
+      assert.equal((await request('/me', { user: 'alice' })).status, 401);
     });
     await t.test('backup and restore validate data and regenerate previews', async () => {
       await new Promise(resolve => server.close(resolve));
@@ -172,6 +184,8 @@ test('SelfCloud end-to-end ownership, photo and recovery workflows', async t => 
       assert.equal(restoredDb.prepare('SELECT COUNT(*) AS count FROM sessions').get().count, 0);
       restoredDb.close();
       await assert.rejects(execute(process.execPath, ['scripts/restore.js', backup], { env: { ...process.env, SELFCLOUD_OFFLINE: 'true', DATA_DIR: restored } }));
+      await writeFile(path.join(backup, 'originals', photo), 'corrupted backup');
+      await assert.rejects(execute(process.execPath, ['scripts/restore.js', backup], { env: { ...process.env, SELFCLOUD_OFFLINE: 'true', DATA_DIR: path.join(workspace, 'corrupt-restore') } }), error => error.stderr.includes('Backup integrity failure'));
     });
   } finally {
     if (server.listening) await new Promise(resolve => server.close(resolve));

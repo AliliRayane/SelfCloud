@@ -5,8 +5,8 @@
   "type": "module",
   "engines": { "node": ">=24" },
   "scripts": {
-    "start": "node server.js",
-    "dev": "concurrently \"node --watch server.js\" \"vite --host 0.0.0.0\"",
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "concurrently \"node --env-file-if-exists=.env --watch server.js\" \"vite --host 0.0.0.0\"",
     "build": "vite build",
     "test": "node --test tests/*.test.js",
     "backup": "node scripts/backup.js",

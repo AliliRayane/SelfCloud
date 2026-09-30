@@ -6,9 +6,9 @@ React, SQLite, and Docker Compose, with explicit `model/`, `vue/`, and
 
 ## Development
 
-Requires Node.js 24+. Run `npm install`, configure the environment using
-`.env.example`, then `npm run dev`. Node does not automatically load `.env`;
-use `node --env-file=.env server.js` when starting the backend manually.
+Requires Node.js 24+. Run `npm install`, copy `.env.example` to `.env`, set a
+random `SETUP_TOKEN`, then `npm run dev`. `npm start` and `npm run dev` load `.env`.
+For development, set `PUBLIC_ORIGIN=http://localhost:5173` to match Vite's URL.
 
 The browser development server runs on port 5173 and proxies `/api` to port 3000.
 `npm run build` builds the frontend; `npm start` serves the production application.

@@ -54,7 +54,7 @@ export function logout(req, res) {
 }
 export function me(req, res) { res.json({ ...publicUser(req.user), used: usage(req.user.id), maxUpload: setting('maxUpload', 2 * 1024 ** 3) }); }
 export async function changePassword(req, res) {
-  if (typeof req.body.currentPassword !== 'string' || !(await bcrypt.compare(req.body.currentPassword, req.user.password))) fail(403, 'Current password is incorrect');
+  if (typeof req.body.currentPassword !== 'string' || Buffer.byteLength(req.body.currentPassword) > 72 || !(await bcrypt.compare(req.body.currentPassword, req.user.password))) fail(403, 'Current password is incorrect');
   credentials({ username: req.user.username, password: req.body.password });
   run('UPDATE users SET password=? WHERE id=?', await bcrypt.hash(req.body.password, 12), req.user.id);
   run('DELETE FROM sessions WHERE user_id=?', req.user.id);
@@ -71,6 +71,7 @@ export async function addUser(req, res) {
 export async function updateUser(req, res) {
   const user = userById(req.params.id);
   if (!user) fail(404, 'User not found');
+  if (req.body.disabled !== undefined && typeof req.body.disabled !== 'boolean') fail(400, 'Disabled must be a boolean');
   if (user.role === 'admin' && req.body.disabled) fail(400, 'Administrator accounts cannot be disabled');
   const quota = positive(req.body.quota ?? user.quota, 'quota');
   const hash = req.body.password ? (credentials({ username: user.username, password: req.body.password }), await bcrypt.hash(req.body.password, 12)) : user.password;

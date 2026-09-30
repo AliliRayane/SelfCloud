@@ -1,0 +1,32 @@
+name: SelfCloud checks
+on: [push, pull_request]
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --audit-level=high
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t selfcloud:test .
+      - name: Check container startup and bundled HEIC converter
+        run: |
+          docker run -d --name selfcloud-test -p 3000:3000 -e SETUP_TOKEN=ci-only-setup-token selfcloud:test
+          for attempt in $(seq 1 30); do
+            if curl --fail http://localhost:3000/api/health; then break; fi
+            sleep 1
+          done
+          curl --fail http://localhost:3000/api/status
+          docker exec selfcloud-test heif-convert --help
+      - name: Container logs
+        if: always()
+        run: docker logs selfcloud-test

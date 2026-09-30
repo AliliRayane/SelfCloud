@@ -10,6 +10,8 @@ import { errorHandler, sameOrigin } from './middleware/security.js';
 import * as account from './controller/account.js';
 import { driveRoutes } from './routes/drive.js';
 import { groupRoutes } from './routes/group.js';
+import { recoverStorage, cleanupTrash } from './service/storage.js';
+import { startPhotoWorker } from './service/photos.js';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -40,5 +42,13 @@ app.use(express.static(dist));
 app.get('/{*path}', (req, res) => existsSync(path.join(dist, 'index.html')) ? res.sendFile(path.join(dist, 'index.html')) : res.status(503).send('Run npm run build, or use the Vite development server.'));
 app.use(errorHandler);
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  app.listen(config.port, '0.0.0.0', () => console.log(`SelfCloud listening on port ${config.port}`));
+  recoverStorage();
+  const stopWorker = startPhotoWorker();
+  cleanupTrash();
+  const cleanup = setInterval(cleanupTrash, 3600000);
+  cleanup.unref();
+  const server = app.listen(config.port, '0.0.0.0', () => console.log(`SelfCloud listening on port ${config.port}`));
+  const shutdown = () => { stopWorker(); clearInterval(cleanup); server.close(() => process.exit(0)); };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }

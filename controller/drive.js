@@ -93,13 +93,13 @@ export function details(req, res) {
 export function download(req, res) {
   const file = accessibleFile(req.params.id, req.user);
   res.set('Cache-Control', 'private, no-store');
-  res.download(originalPath(file.id), file.name);
+  res.download(originalPath(file.id), file.name, { dotfiles: 'allow' });
 }
 export function preview(req, res) {
   const file = accessibleFile(req.params.id, req.user);
   if (!file.preview_size) fail(404, 'Preview unavailable');
   res.set('Cache-Control', 'private, no-store');
-  res.type('webp').sendFile(previewPath(file.id));
+  res.type('webp').sendFile(previewPath(file.id), { dotfiles: 'allow' });
 }
 export function update(req, res) {
   const file = ownedFile(req.params.id, req.user);

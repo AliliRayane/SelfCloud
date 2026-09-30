@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import exifr from 'exifr';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { readFile, unlink } from 'node:fs/promises';
+import { writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { get, run } from '../model/database.js';
 import { usage, userById } from '../model/user.js';
@@ -61,8 +61,12 @@ export async function processNextPhoto() {
       warnings.push('Preview skipped because the user quota is full');
       preview = undefined;
     }
-    if (preview) await sharp(preview).toFile(previewPath(file.id));
-  } catch (error) { warnings.push(`Preview generation: ${error.message}`); }
+    if (preview) {
+      // Reserve preview bytes synchronously before disk I/O so uploads see them.
+      run('UPDATE files SET preview_size=? WHERE id=?', preview.length, file.id);
+      await writeFile(previewPath(file.id), preview);
+    }
+  } catch (error) { preview = undefined; warnings.push(`Preview generation: ${error.message}`); }
   finally {
     if (converted) await unlink(converted).catch(() => {});
     if (file.is_photo) {

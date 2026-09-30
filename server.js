@@ -9,6 +9,7 @@ import { authenticate, admin } from './middleware/auth.js';
 import { errorHandler, sameOrigin } from './middleware/security.js';
 import * as account from './controller/account.js';
 import { driveRoutes } from './routes/drive.js';
+import { groupRoutes } from './routes/group.js';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -31,6 +32,7 @@ app.patch('/api/admin/users/:id', authenticate, admin, account.updateUser);
 app.get('/api/admin/settings', authenticate, admin, account.settings);
 app.put('/api/admin/settings', authenticate, admin, account.updateSettings);
 
+app.use('/api', groupRoutes);
 app.use('/api', driveRoutes);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Endpoint not found' }));
 const dist = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dist');

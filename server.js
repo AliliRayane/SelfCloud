@@ -3,7 +3,6 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { existsSync } from 'node:fs';
 import { config } from './config/index.js';
 import { authenticate, admin } from './middleware/auth.js';
 import { errorHandler, sameOrigin } from './middleware/security.js';
@@ -12,6 +11,7 @@ import { driveRoutes } from './routes/drive.js';
 import { groupRoutes } from './routes/group.js';
 import { recoverStorage, cleanupTrash } from './service/storage.js';
 import { startPhotoWorker } from './service/photos.js';
+import { frontend } from './middleware/frontend.js';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -38,8 +38,7 @@ app.use('/api', groupRoutes);
 app.use('/api', driveRoutes);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Endpoint not found' }));
 const dist = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dist');
-app.use(express.static(dist));
-app.get('/{*path}', (req, res) => existsSync(path.join(dist, 'index.html')) ? res.sendFile(path.join(dist, 'index.html')) : res.status(503).send('Run npm run build, or use the Vite development server.'));
+app.use(frontend(dist));
 app.use(errorHandler);
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   recoverStorage();

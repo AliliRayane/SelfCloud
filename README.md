@@ -11,7 +11,11 @@ random `SETUP_TOKEN`, then `npm run dev`. `npm start` and `npm run dev` load `.e
 For development, set `PUBLIC_ORIGIN=http://localhost:5173` to match Vite's URL.
 
 The browser development server runs on port 5173 and proxies `/api` to port 3000.
-`npm run build` builds the frontend; `npm start` serves the production application.
+Open **http://localhost:5173** when using `npm run dev` (port 3000 is the backend).
+`npm run build` builds the frontend; `npm start` builds and serves the production
+application on **http://localhost:3000**. For that mode set
+`PUBLIC_ORIGIN=http://localhost:3000`. Always open the application through its
+server URL, rather than opening `vue/index.html` directly or with a static-file server.
 
 See [architecture](docs/architecture.md) for ownership and directory conventions.
 

@@ -5,6 +5,7 @@
   "type": "module",
   "engines": { "node": ">=24" },
   "scripts": {
+    "prestart": "npm run build",
     "start": "node --env-file-if-exists=.env server.js",
     "dev": "concurrently \"node --env-file-if-exists=.env --watch server.js\" \"vite --host 0.0.0.0\"",
     "build": "vite build",

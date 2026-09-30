@@ -5,5 +5,5 @@ export default defineConfig({
   root: 'vue',
   plugins: [react()],
   build: { outDir: '../dist', emptyOutDir: true },
-  server: { proxy: { '/api': 'http://localhost:3000' } },
+  server: { port: 5173, strictPort: true, proxy: { '/api': 'http://localhost:3000' } },
 });

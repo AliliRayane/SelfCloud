@@ -5,3 +5,4 @@ backups/
 .env
 coverage/
 *.log
+tests/.runtime-*/

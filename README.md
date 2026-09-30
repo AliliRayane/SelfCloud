@@ -33,3 +33,6 @@ setup wizard creates the administrator and configures quotas and upload limits.
 Run `npm test` for integration tests and `npm run build` for the production UI.
 Automatic phone backup, named albums, public links, resumable uploads, and
 two-factor authentication are future features. RAW previews are best-effort.
+
+See [verification status](docs/verification.md) for tested workflows and the
+remaining container, real-phone-image, and browser deployment checks.
